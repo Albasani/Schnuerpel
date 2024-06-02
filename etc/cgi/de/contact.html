@@ -1,0 +1,29 @@
+<h1>Kontaktformular</h1>
+<p>Mit diesem Fomular können Sie uns eine Nachricht zukommen lassen,
+etwa um ein Benutzerkonto zu beantragen.</p>
+
+<p>Ein Blick auf <a href="/info/terms_of_use.html.de"
+>Nutzungsbedingungen</a> und
+<a href="/wiki/FAQ_%28Deutsch%29"
+>FAQ</a> ist möglicherweise hilfreich.</p>
+
+<table>
+  <tr valign="top">
+    <td align="right"><b>Name:</b></td>
+    <td><!--#echo var="INPUT_NAME"--></td>
+  </tr><tr valign="top">
+    <td align="right"><b>Ihre Emailadresse:</b></td>
+    <td><!--#echo var="INPUT_FROM"--></td>
+  </tr><tr valign="top">
+    <td align="right"><b>Betreff:</b></td>
+    <td><!--#echo var="INPUT_SUBJECT"--></td>
+  </tr><tr valign="top">
+    <td align="right"><b>Kommentar:</b></td>
+    <td><!--#echo var="INPUT_BODY"--></td>
+  </tr><tr valign="top">
+    <td></td>
+    <td>
+      <input type="submit" name="send" value="Abschicken"/>
+    </td>
+  </tr>
+</table>

@@ -1,0 +1,34 @@
+<table>
+<tr><td>User-ID:</td><td><!--#echo var="userid"--></td></tr>
+<tr><td>Created:</td><td><!--#echo var="created"--></td></tr>
+<tr><td>Last login:</td><td><!--#echo var="last_login"--></td></tr>
+<tr><td>Status:</td><td>
+  <!--#echo var="INPUT_STATUS_ACTIVE"-->Active
+  <!--#echo var="INPUT_STATUS_SIGNED_OFF"-->Signed off
+  <!--#echo var="INPUT_STATUS_CLOSED"-->Closed
+</td></tr>
+<tr><td><label for="input_username">Username:</label></td>
+  <td><!--#echo var="INPUT_USERNAME"--></td></tr>
+<tr><td>Sex:</td><td>
+  <!--#echo var="INPUT_SEX_MALE"-->Mr.
+  <!--#echo var="INPUT_SEX_FEMALE"-->Ms.
+  <!--#echo var="INPUT_SEX_NA"-->N/A
+</td></tr>
+<tr><td><label for="input_first_name">First name:</label></td>
+  <td><!--#echo var="INPUT_FIRST"--></td></tr>
+<tr><td><label for="input_last_name">Last name:</label></td>
+  <td><!--#echo var="INPUT_LAST"--></td></tr>
+<tr><td><label for="input_email">E-Mail:</label></td>
+  <td><!--#echo var="INPUT_EMAIL"--></td></tr>
+<tr><td><label for="input_language">Language:</label></td>
+  <td><!--#echo var="INPUT_LANGUAGE"--></td></tr>
+</table>
+
+<table>
+<!--#echo var="INPUT_FEATURE_FIELDS"-->
+</table>
+
+<hr/>
+<p><input type="submit" name="Cancel" value="Cancel"/>
+<input type="submit" name="ConfirmChange" value="Change"/>
+<!--#echo var="INPUT_SEND_MAIL"--> Send E-Mail afterwards ...</p>

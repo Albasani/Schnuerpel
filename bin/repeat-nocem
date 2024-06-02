@@ -1,0 +1,30 @@
+#!/bin/sh
+######################################################################
+#
+# $Id: repeat-nocem 321 2010-08-20 08:30:32Z alba $
+#
+# Copyright 2007-2010 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# This is a work-around for a strange issue with perl-nocem.
+# Sometimes processing a notice failes, leaving the meager message
+#    error: cannot cancel <foo@bar>
+# in "perl-nocem.log".
+#
+# This script searches the log file "news" for message IDs sent to
+# the channel called "nocem!", retrieves corresponding message tokens,
+# and feeds them to perl-nocem.
+#
+######################################################################
+
+. "$SCHNUERPEL_DIR/bin/config.sh"
+
+awk '/ nocem!( |$)/ { print $6 }' $LOG |
+"$PATHBIN/grephistory" -s |
+"$PATHBIN/perl-nocem"

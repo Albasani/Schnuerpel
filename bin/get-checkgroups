@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# $Id: get-checkgroups 136 2008-08-20 19:42:53Z alba $
+#
+# Copyright 2008 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# A front end to docheckgroups using wget and grephistory.
+#
+######################################################################
+
+if [ -z "$1" ]; then
+  echo "$0 is a front end to docheckgroups."
+  echo ""
+  echo "ARGUMENTS"
+  echo "  Arguments that start with http:// or ftp:// are considered a URL"
+  echo "  and loaded with 'wget'."
+  echo "  Arguments that start with < are considered a message ID and are"
+  echo "  retrieved from spool with 'grephistory' and 'sm'."
+  echo "  All other arguments are considered plain files."
+  echo ""
+  echo "PRE-PROCESSING"
+  echo "  If the text contains the line /^\\s*English variant:/ then"
+  echo "  everything up to and including this line is removed."
+  echo "  If the text starts with article headers these are removed."
+  echo ""
+  echo "OUTPUT"
+  echo "  Output is a shell script. First line is"
+  echo "     ctlinnd throttle checkgroups"
+  echo "  last line is"
+  echo "     ctlinnd go checkgroups"
+  echo "  Pipe output into a shell to perform changes."
+  echo ""
+  exit 0
+fi
+
+. "$SCHNUERPEL_DIR/bin/config.sh"
+
+PATH_CHECK="$PATHBIN/docheckgroups"
+PATH_CTLINND="$PATHBIN/ctlinnd"
+PATH_GH="$PATHBIN/grephistory"
+PATH_SM="$PATHBIN/sm"
+
+[ -x "$PATH_CHECK" ] || exit 1
+[ -x "$PATH_CTLINND" ] || exit 2
+[ -x "$PATH_GH" ] || exit 3
+[ -x "$PATH_SM" ] || exit 4
+
+#
+# Verify the awk script with
+# <ffm.checkgroup.20050601000000@ffm.arcornews.de>
+# and
+# <checkgroups-opennews-20050717$1@code-werk.net>
+#
+
+readfile()
+{
+  local i="$1"
+
+  if [ "${i#http://}" != "$i" ]; then
+    wget -q -O- "$i"
+  elif [ "${i#ftp://}" != "$i" ]; then
+    wget -q -O- "$i"
+  elif [ "${i#<}" != "$i" ]; then
+    token=$( "$PATH_GH" "$1" )
+    "$PATH_SM" "$token"
+  else
+    cat "$i"
+  fi
+}
+
+echo "$PATH_CTLINND throttle checkgroups"
+for i in "$@"; do
+
+  content=$( readfile "$i" )
+
+  if echo "$content" | grep "^[[:space:]]*English variant:" > /dev/null
+  then
+    echo "$content" | sed '1,/^[[:space:]]*English variant:/d'
+  else
+    echo "$content" |
+    awk ' /^-- $/ { exit(0); }
+	FNR==1&&/^[A-Za-z]+[: ]/{ f = -1; }
+	/^[[:space:]]*$/{ if (!blank++) f++; next; }
+	!f && !/^#/ { blank = 0; print $0; }'
+  fi
+done | nice $PATH_CHECK | sed '/^exit\>/d'
+echo "$PATH_CTLINND go checkgroups"

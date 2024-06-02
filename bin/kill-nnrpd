@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $Id: kill-nnrpd 139 2008-09-10 20:49:11Z alba $
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+# Sample output of "ps auwx"
+# news 25343 7.5 0.6 28828 7016 ? SN 20:23 0:00 - nnrpd: alpha826.server4you.de GROUP
+# ^^^^ ^^^^^ ^^^ ^^^ ^^^^^ ^^^^ ^ ^^ ^^^^^ ^^^^ ^ ^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^ ^^^^^
+# 1    2     3   4   5     6    7 8  9     10   11    12 13                     14
+
+# news 6876  0.2 0.3 78660 6692 ? SN 06:31 0:00 - nnrpd: cm90-73.liwest.at XOVER        
+  # awk '$1 == "news" && $12 ~ "^nnrpd[[:alnum:]-]*:" {
+
+if [ $# -lt 1 ]; then
+  # awk's sub() is used to cut off trailing white space added
+  # with option -s of nnrpd
+  ps auwx -ww --sort start_time |
+  gawk '$1 == "news" && $12 ~ "^nnrpd[[:alnum:]-]*:" {
+	sub(/[ ]*$/, "", $0); print $0;
+  }' |
+  more
+else
+  ps auwx |
+  gawk -v "IP=$1" \
+	'$1 == "news" && $12 ~ "nnrpd[[:alnum:]-]*:" && $13 == IP { print $2 }' |
+  xargs -r echo kill
+fi

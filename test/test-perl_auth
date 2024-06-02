@@ -1,0 +1,89 @@
+#!/usr/bin/perl -w
+#
+# $Id: test-perl_auth 362 2010-09-10 01:08:54Z alba $
+#
+# Copyright 2007 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+
+use strict;
+use Schnuerpel::INN::ShellVars qw( load_innshellvars );
+use Schnuerpel::INN::TestFilter qw( test_script );
+use Schnuerpel::ConfigNNTP();
+
+use constant FUNC_TEST => [
+  [ 'auth_init', sub {} ],
+  [ 'authenticate', \&Schnuerpel::INN::TestFilter::setup_attributes ],
+];
+
+######################################################################
+# MAIN
+######################################################################
+
+my $HOME = $ENV{'HOME'};
+my $config = Schnuerpel::ConfigNNTP->new();
+( $::username, $::password ) = $config->read_authinfo();
+
+# this changes $ENV{'HOME'}
+load_innshellvars();
+
+printf '$pathetc=%s' . "\n", $inn::pathetc;
+unless(-d $inn::pathetc)
+  { die "Directory $inn::pathetc does not exist."; }
+
+my $readers = $inn::pathetc . '/readers.conf';
+printf '$readers=%s' . "\n", $readers;
+my $file;
+unless(open($file, '<', $readers))
+{
+  die "Can't read from file $readers: $!";
+}
+
+while(my $line = <$file>)
+{
+  next unless($line =~ m/^\s*(perl_auth|perl_access)\s*:\s*(.*)/);
+  my $keyword = $1;
+  my $script = $2;
+  $script =~ s/\s*$//;		# trim trailing white space
+  $script =~ s/^"([^"]*)"$/$1/; # remove surrounding quotes
+
+  test_script $script, (FUNC_TEST);
+}
+
+######################################################################
+package Schnuerpel::INN::TestFilter;
+######################################################################
+
+# our %attributes;
+
+######################################################################
+sub setup_attributes($)
+######################################################################
+{
+  %::attributes = (
+    'hostname' => 'localhost',
+    'ipaddress' => '127.0.0.1',
+
+    # this is an integer, not a string
+    'port' => 12345,
+
+    # hostname of the interface the client connected on
+    # 'interface'
+
+    # IP address (as a string) of the interface the client connected on,
+    # 'intipaddr'
+
+    # the port (as an integer) on the interface the client connected on
+    'intport' => 119,
+
+    'username' => $::username,
+    'password' => $::password,
+  );
+}
+
+######################################################################

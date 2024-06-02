@@ -1,0 +1,30 @@
+********************************************************************
+ASN Usenet                                                 Anmeldung
+********************************************************************
+
+
+Vielen Dank für Ihre Anmeldung bei news.albasani.net!
+
+Klicken Sie bitte innerhalb von 24 Stunden auf folgenden Link
+um Ihre Anmeldung abzuschliessen:
+
+<!--#echo var="CONFIRM_LINK"-->
+
+
+
+Viel Spaß im Usenet.
+
+Sabine Schulz und Alexander Bartolich
+Usenet-Team ASN
+
+
+
+PS: Sollte ihnen das alles nichts sagen, dann ignorieren sie bitte
+    diese Nachricht. Diese E-Mail wurde verschickt, weil jemand ihre
+    E-Mail-Adresse in unserem Anmeldeformular angegeben hat.
+    IP-Adresse: <!--#echo var="REMOTE_ADDR"-->
+    Datum     : <!--#echo var="LAST_MODIFIED"-->
+
+********************************************************************
+Fragen?                            mailto:news-register@albasani.net
+********************************************************************

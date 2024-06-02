@@ -1,0 +1,34 @@
+#!/bin/sh
+######################################################################
+#
+# $Id: check-moderated-groups 199 2009-01-13 20:32:20Z alba $
+#
+# Copyright 2008-2009 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Search active file for groups named *.moderated that are not set
+# to status moderated and issue a correcting command line.
+#
+# Rules:
+# - all group names containing "\.moderated"
+# - all of perl.* (according to http://nntp.develooper.com/)
+#
+######################################################################
+
+. "$SCHNUERPEL_DIR/bin/config.sh"
+
+# command can also be "newgroup". INN must no be throttled, anyway.
+command="${1:-changegroup}"
+
+grep -vf "$SCHNUERPEL_DIR/etc/hierarchies-with-checkgroups" "${ACTIVE}" |
+awk -v "CMD=$command" '\
+	($1 ~ /\.moderated[^ ]*/ || $1 ~ /^perl\./) &&
+	($4 != "m" && $4 != "x") {
+		printf "ctlinnd %s %s m\n", CMD, $1
+	}'

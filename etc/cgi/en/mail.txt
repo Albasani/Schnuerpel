@@ -1,0 +1,30 @@
+********************************************************************
+ASN Usenet                                              Registration
+********************************************************************
+
+
+Thanks for registering with news.albasani.net!
+
+Please visit the following link in the next 24 hours to confirm
+your registration. 
+
+<!--#echo var="CONFIRM_LINK"-->
+
+
+
+Have fun on Usenet.
+
+Sabine Schulz and Alexander Bartolich
+Usenet team ASN
+
+
+
+PS: If you don't know what this is about, please ignore this message.
+    We sent this email because somebody entered your address in
+    our registration form.
+    IP-Address: <!--#echo var="REMOTE_ADDR"-->
+    Date      : <!--#echo var="LAST_MODIFIED"-->
+
+********************************************************************
+Questions?                         mailto:news-register@albasani.net
+********************************************************************

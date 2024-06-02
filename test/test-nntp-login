@@ -1,0 +1,61 @@
+#!/usr/bin/perl -w
+#
+# $Id: test-nntp-login 362 2010-09-10 01:08:54Z alba $
+#
+# Copyright 2007 - 2008 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Reads username and password from newsreader configuration.
+# Prints minimal NNTP commands with delays added to receive
+# response. Use together with nc.
+#
+# ./test-nntp-login | nc $NNTPSERVER 119
+#
+######################################################################
+
+use strict;
+use Schnuerpel::ConfigNNTP();
+use IO::Handle();
+
+######################################################################
+sub yield()
+######################################################################
+{
+  STDOUT->flush();
+  sleep(1);
+}
+
+######################################################################
+# MAIN
+######################################################################
+
+my $config = Schnuerpel::ConfigNNTP->new();
+my ( $username, $password ) = $config->read_authinfo();
+
+print "MODE READER\r\n";
+yield();
+
+if (defined($username))
+{
+  printf "AUTHINFO USER %s\r\n", $username;
+  yield();
+}
+
+if (defined($password))
+{
+  printf "AUTHINFO PASS %s\r\n", $password;
+  yield();
+}
+
+print "GROUP local.test\r\n";
+yield();
+
+print "QUIT\r\n";
+
+######################################################################

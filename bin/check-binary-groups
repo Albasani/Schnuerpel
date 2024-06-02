@@ -1,0 +1,27 @@
+#!/bin/sh
+######################################################################
+#
+# $Id: check-binary-groups 198 2009-01-13 20:24:08Z alba $
+#
+# Copyright 2009 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Search active file for binary groups and issue a command line
+# that sets them to status "x" (no local postings and ignored for
+# articles from peers). If you simply remove such groups they are
+# recreated by the next checkgroups control.
+#
+# Note: changegroup is ignored if INN is throttled.
+#
+######################################################################
+
+. "$SCHNUERPEL_DIR/bin/config.sh"
+
+grep -f "$SCHNUERPEL_DIR/etc/binary-groups" "${ACTIVE}" |
+awk '$4 != "x" { printf "ctlinnd changegroup %s x\n", $1; }'

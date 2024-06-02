@@ -1,0 +1,42 @@
+<h1>Anmeldung 2/3</h1>
+
+<h2>E-Mail-Adresse (notwendig)</h2>
+
+<p>Bitte geben sie hier eine zustellfähige E-Mail-Adresse an.
+Sie erhalten weitere Anweisungen zugeschickt.</p>
+
+<p>Bei Problemen ist diese Adresse unsere einzige Kontaktmöglichkeit.
+Wir werden die Adresse nicht veröffentlichen, wir verschicken
+keine "Newsletter", und sie sind nicht verpflichtet, diese Adresse
+in Ihren Postings zu verwenden.</p>
+
+<p>Darum bitten wir Sie, keine kurzfristige Wegwerfaddresse anzugeben.</p>
+
+<p>E-Mail: <!--#echo var="INPUT_USERNAME"--></p>
+
+<h2>Persönliche Angaben (nicht notwendig)</h2>
+<table>
+<tr><td>Anrede:</td><td>
+  <!--#echo var="INPUT_SEX_MALE"-->Herr
+  <!--#echo var="INPUT_SEX_FEMALE"-->Frau
+  <!--#echo var="INPUT_SEX_NA"-->Keine Angabe
+</td></tr>
+<tr><td>Vorname:</td><td><!--#echo var="INPUT_FIRST"--></td></tr>
+<tr><td>Nachname:</td><td><!--#echo var="INPUT_LAST"--></td></tr>
+</table>
+
+<h2>Captcha (notwendig)</h2>
+
+<p>Die folgende Aufgabe ist für Menschen leicht, und für
+Computerprogramme schwer zu lösen. Wir wollen damit das
+automatisierte Anlegen von Benutzerkonten erschweren.</p>
+
+<p>Welche Buchstaben oder Ziffern sind in der Grafik zu sehen?</p>
+<!--#echo var="INPUT_IMG"-->
+
+<p>Antwort:&nbsp;
+<!--#echo var="INPUT_RESPONSE"--></p>
+<hr/>
+<input type="submit" name="Cancel" value="Abbrechen"/>
+<input type="submit" name="CaptchaRetry" value="Anderes Bild"/>
+<input type="submit" name="CaptchaSubmit" value="Weiter"/>

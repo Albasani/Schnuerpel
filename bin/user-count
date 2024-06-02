@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# $Id: user-count 404 2010-09-22 20:00:01Z alba $
+#
+# Copyright 2008-2010 Alexander Bartolich
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+INTERVAL='6 MONTH'
+
+m()
+{
+  mysql --batch --skip-column-names \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}"
+}
+
+expired=$(
+  $SCHNUERPEL_DIR/bin/user-expired --only-count )
+expired_active=$(
+  $SCHNUERPEL_DIR/bin/user-expired --only-count --active )
+expired_pending=$(
+  $SCHNUERPEL_DIR/bin/user-expired --only-count --pending )
+
+echo          "expired_pending=${expired_pending}" 
+echo          " expired_active=${expired_active}" 
+echo          "        expired=$expired"
+echo "
+
+select concat('         active=', count(id)) from r_user
+where FROM_UNIXTIME(last_login) >= DATE_SUB(CURDATE(), INTERVAL $INTERVAL);
+
+select concat('     have_login=', count(id)) from r_user
+where not(last_login is null);
+
+select concat('        pending=', count(id)) from r_user
+where last_login is null;
+
+select concat('    deactivated=', count(id)) from r_user
+where status <> 1;
+
+select concat('       accounts=', count(id)) from r_user;
+
+select concat('         max_id=', max(id)) from r_user;
+
+" | m
+
+echo "accounts = have_login + pending"
+echo "expired = expired_active + expired_pending"
+echo "have_login = active + expired_active"

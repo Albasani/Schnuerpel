@@ -1,0 +1,129 @@
+#!/usr/bin/perl -w
+#
+# $Id: repost-cleanup 15 2007-10-07 16:48:24Z alba $
+#
+# Copyright 2007 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Remove redundant reposts of articles after a rogue cancel.
+# - if repost has X-Original-Message-ID header
+# - and article referenced by X-Original-Message-ID exists
+# - and referenced article has Cancel-Lock header
+# - then remove repost
+#
+# Since "X-Original-Message-ID" is not available to filter_innd.pl
+# this is implemented as a separate program. Reads headers of repost
+# from STDIN. Multiple postings are separated by an empty line.
+# Typically used with the following newsfeed configuration:
+#
+#   repost-cleanup!:*:Tc,Ap,WH:/usr/local/bin/repost-cleanup
+#
+######################################################################
+
+use strict;
+use Sys::Syslog qw( syslog );
+use News::Article();
+
+######################################################################
+# Configuration
+######################################################################
+
+use constant DEBUG => 0;
+use constant MAXHEADS => 8192;
+use constant GET_HEADERS => "'%s' '%s' | /usr/bin/xargs -r '%s' -H";
+
+######################################################################
+# MAIN
+######################################################################
+
+$ENV{'PATH'} = '/bin/:/usr/bin/';
+
+for my $f(
+  '/usr/lib/news/innshellvars.pl',
+  '/usr/lib/news/lib/innshellvars.pl'
+) { if (-f $f) { require $f; last; } }
+
+#
+# "use constant" is executed before innshellvars.pl so we have to
+# define plain variables.
+#
+my $PATH_GH = $inn::pathbin . '/grephistory';
+my $PATH_SM = $inn::pathbin . '/sm';
+my $PATH_CTLINND = $inn::pathbin . '/ctlinnd';
+
+Sys::Syslog::openlog('repost-cleanup', 'nowait', 'news');
+syslog('notice', '$Revision: 15 $' . "\n");
+
+while (<>)
+{
+  my $article = News::Article->new();
+  unless( $article->read_headers(\*STDIN, MAXHEADS) )
+  {
+    syslog('err', "Can't read article from STDIN");
+    die "Can't read article from STDIN";
+  }
+
+  my $id = $article->header('message-id');
+  unless(defined($id))
+  {
+    syslog('err', "Can't retrieve Message-ID");
+    die "Can't retrieve Message-ID";
+  }
+
+  if (DEBUG)
+  {
+    syslog('notice', "Processing %s", $id);
+  }
+
+  my $org_id = $article->header('X-Original-Message-ID');
+  next unless(defined($org_id));
+
+  if ($id =~ m#[^[:alnum:]<@>.$!*/=_+-]#)
+  {
+    syslog('warning',
+      "Message-ID %s contains invalid characters.\n", $id
+    );
+    next;
+  }
+
+  if ($org_id =~ m#[^[:alnum:]<@>.$!*/=_+-]#)
+  {
+    syslog('warning',
+      "X-Original-Message-ID %s of %s contains invalid characters.\n",
+      $org_id, $id
+    );
+    next;
+  }
+
+  my $org_article = News::Article->new();
+  
+  my $cmd = sprintf(GET_HEADERS, $PATH_GH, $org_id, $PATH_SM);
+  open(CMD, '-|', $cmd) || die "Can't run $cmd";
+  unless( $org_article->read_headers(\*CMD, MAXHEADS) )
+  {
+    close(CMD);
+    syslog('warning', "Can't read original article %s", $org_id);
+    next;
+  }
+  close(CMD);
+
+  my $org_lock = $org_article->header('Cancel-Lock');
+  unless(defined($org_lock))
+  {
+    syslog('warning',
+      "Original article %s of %s contains no Cancel-Lock",
+      $org_id, $id
+    );
+    next;
+  }
+
+  syslog('notice', "Removing %s, repost of %s", $id, $org_id);
+  $cmd = sprintf("'%s' cancel '%s'", $PATH_CTLINND, $id);
+  system($cmd);
+}

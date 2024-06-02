@@ -1,0 +1,114 @@
+#!/bin/bash
+######################################################################
+#
+# $Id: user-post-stats 505 2011-07-18 23:48:54Z alba $
+#
+# Copyright 2011 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+do_mysql()
+{
+  mysql --batch --skip-column-names --table \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}" |
+  sed -e '/^+/d' -e 's/| //g' -e 's/|$//'
+}
+
+count_users()
+{
+  echo "SELECT userid, username, count(username)
+  FROM r_local_post
+  WHERE timestamp >= ${from_timestamp}
+  AND timestamp < ${to_timestamp} ${and_user_id} ${and_group}
+  GROUP BY r_local_post.username
+  ORDER BY count(username) DESC;" |
+  do_mysql
+}
+
+count_groups()
+{
+  local "countcol=${1:-group_name}"
+
+  echo "SELECT ${countcol}, count(${countcol})
+  FROM r_local_post
+  LEFT JOIN r_local_post_group ON r_local_post.id = r_local_post_group.id
+  WHERE timestamp >= ${from_timestamp}
+  AND timestamp < ${to_timestamp} ${and_user_id} ${and_group}
+  GROUP BY ${countcol}
+  ORDER BY count(${countcol}) DESC;" |
+  do_mysql
+}
+
+from_year="%Y"
+from_month="%m"
+from_day="%d"
+to_suffix="1 day"
+and_user_id=""
+and_group=""
+
+while [ $# -gt 0 ]; do
+  case "${1}" in
+    day)     from_day="%d";                                        to_suffix="1 day" ;;
+    day=*)   from_day="${1#day=}";                                 to_suffix="1 day" ;;
+    month)   from_day="1"; from_month="%m";                        to_suffix="1 month" ;;
+    month=*) from_day="1"; from_month="${1#month=}";               to_suffix="1 month" ;;
+    year)    from_day="1"; from_month="1"; from_year="%Y";         to_suffix="1 year" ;;
+    year=*)  from_day="1"; from_month="1"; from_year="${1#year=}"; to_suffix="1 year" ;;
+    userid=*) and_user_id="AND userid = ${1#userid=}" ;;
+    group=*) and_group="AND group_name LIKE '${1#group=}%'" ;;
+    count=*) count="${1#count=}" ;;
+    *)
+      echo "USAGE: user-posts [options]"
+      echo "DATE OPTIONS:"
+      echo "  year=<int>"
+      echo "  month=<int>"
+      echo "  day=<int>"
+      echo "  If value is omitted then current date is used."
+      echo "COUNT OPTIONS:"
+      echo "  count=[users|groups|hierarchies|tlh|slh]"
+      echo "  users       ... Count posts by users (default)."
+      echo "  groups      ... Count posts to groups."
+      echo "  hierarchies|tlh"
+      echo "              ... Count posts to groups, aggregated by top level hierarchy."
+      echo "  slh         ... Count posts to groups, aggregated by 2nd level hierarchy."
+      echo "FILTER OPTIONS:"
+      echo "  userid=<int>"
+      echo "  ... only count posts of this user"
+      echo "  group=<string>"
+      echo "  ... only count groups matching a prefix"
+      echo "  Default is to count posts of all users and groups."
+      exit 0
+      ;;
+  esac
+  shift
+done
+
+from_date=$( date "+${from_year}-${from_month}-${from_day}" )
+from_timestamp=$( date "+%s" -d "${from_date}" )
+to_timestamp=$( date "+%s" -d "${from_date} ${to_suffix}" )
+
+case "${count:-users}" in
+  users)	count_users ;;
+  groups)	count_groups ;;
+  hierarchies|tlh)
+		count_groups "SUBSTRING_INDEX(group_name, '.', 1)" ;;
+  slh)
+		count_groups "SUBSTRING_INDEX(group_name, '.', 2)" ;;
+  *)
+    echo "Possible values for option count are:"
+    echo "  count=users"
+    echo "  count=groups"
+    echo "  count=hierarchies"
+    exit 0
+    ;;
+esac

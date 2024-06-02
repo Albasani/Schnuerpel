@@ -1,0 +1,71 @@
+#!/bin/bash
+######################################################################
+#
+# $Id: user-posts 499 2011-04-23 15:11:36Z alba $
+#
+# Copyright 2008-2011 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+from_year="%Y"
+from_month="%m"
+from_day="%d"
+to_suffix="1 day"
+and_user_id=""
+
+while [ $# -gt 0 ]; do
+  case "${1}" in
+    day)     from_day="%d";                                        to_suffix="1 day" ;;
+    day=*)   from_day="${1#day=}";                                 to_suffix="1 day" ;;
+    month)   from_day="1"; from_month="%m";                        to_suffix="1 month" ;;
+    month=*) from_day="1"; from_month="${1#month=}";               to_suffix="1 month" ;;
+    year)    from_day="1"; from_month="1"; from_year="%Y";         to_suffix="1 year" ;;
+    year=*)  from_day="1"; from_month="1"; from_year="${1#year=}"; to_suffix="1 year" ;;
+    week)
+      from_timestamp=$( date -d "Monday 1 week ago" "+%s" )
+      to_timestamp=$( date -d "Monday" "+%s" )
+      ;;
+    userid=*) and_user_id="AND userid = ${1#userid=}" ;;
+    *)
+      echo "Usage: user-posts [year=value|month=value|week|day=value] [userid=id]"
+      echo "If value is omitted the current date is used."
+      exit 0
+      ;;
+  esac
+  shift
+done
+
+if [ -z "${from_timestamp:-}" ]; then
+  from_date=$( date "+${from_year}-${from_month}-${from_day}" )
+  from_timestamp=$( date "+%s" -d "${from_date}" )
+  to_timestamp=$( date "+%s" -d "${from_date} ${to_suffix}" )
+fi
+
+echo "select
+	FROM_UNIXTIME(timestamp),
+	username,
+	concat('<', h_message_id, '>'),
+	GROUP_CONCAT(r_local_post_group.group_name),
+	IFNULL(h_path, '-'),
+	IFNULL(r_control_setup.name, '-'),
+	h_from
+FROM r_local_post
+LEFT JOIN r_control_setup ON r_local_post.h_control = r_control_setup.id
+INNER JOIN r_local_post_group ON r_local_post.id = r_local_post_group.id
+WHERE timestamp >= ${from_timestamp}
+AND timestamp < ${to_timestamp} ${and_user_id}
+GROUP BY r_local_post.id
+ORDER BY timestamp;" |
+mysql --batch --skip-column-names --table \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}" |
+sed -e '/^+/d' -e 's/| //g'

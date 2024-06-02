@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $Id: kill-old-nnrpd 482 2011-03-01 01:06:34Z alba $
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+# maximum age in hours
+max_hour="${1:-5}"
+nnrpd_cmd="${2:-nnrpd,nnrpd-ssl}"
+
+# To determine the true command name: ps c -A
+
+ps -C "${nnrpd_cmd}" -o pid,etime --no-headers |
+awk -v "max_hour=${max_hour}" '{
+  nr = split($2, a, /:/);
+  if (nr < 3) next;                           # less then one hour
+  else if (nr == 3) hour = a[1];              # less than a day
+  else if (nr == 4) hour = a[1] * 24 + a[2];  # more than a day
+  else next;                                  # unknown format
+  if (hour < max_hour) next;
+  # printf "max=%d nr=%d hour=%2d %s\n", max_hour, nr, hour, $0;
+  print $1;
+}'

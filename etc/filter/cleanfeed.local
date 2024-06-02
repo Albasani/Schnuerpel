@@ -1,0 +1,59 @@
+#!/usr/bin/perl -w
+#
+# $Id: cleanfeed.local 73 2008-02-15 18:28:11Z alba $
+#
+# This is example code released to public domain.
+# It is ment as an replacement for Cleanfeed's
+#   /etc/news/filter/cleanfeed/cleanfeed.local
+# Read comments below for instructions.
+#
+######################################################################
+
+#
+# You propably will have to change these directories 
+#
+BEGIN { push(@INC, '/opt/schnuerpel/lib', '/opt/schnuerpel/etc'); }
+
+use Schnuerpel::INN::Cancel qw(
+  handle_cancel
+  $bad_cancel_hosts
+);
+
+######################################################################
+sub local_config()
+######################################################################
+{
+  $bad_cancel_hosts = {};
+  read_hash('bad_cancel_hosts', $bad_cancel_hosts);
+}
+
+######################################################################
+sub local_filter_after_emp
+######################################################################
+{
+  if (exists( $hdr{'Supersedes'} ))
+  {
+    return handle_cancel(\%hdr, $hdr{'Supersedes'},
+      'Supersedes ' . $hdr{'Message-ID'}
+    );
+  }
+  return undef;
+}
+
+######################################################################
+sub local_filter_cancel
+######################################################################
+{
+  if ($hdr{'Control'} =~ m/^cancel\s+(<[^>]+>)/i)
+  {
+    return handle_cancel(\%hdr, $1,
+      'Cancel ' . $hdr{'Message-ID'}
+    );
+  }
+  else
+  {
+    return 'Cancel with broken target ID';
+  }
+}
+
+######################################################################

@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# $Id: netstat-nnrpd 234 2009-07-30 22:00:11Z alba $
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+if [ "${1:-}" = "sudo" ]; then
+  use_sudo=1
+  shift
+fi
+
+do_netstat()
+{
+  if [ -n "${use_sudo:-}" ]; then
+    sudo `which netstat` -anpt
+  else
+    netstat -anpt
+  fi
+}
+
+#
+# Sample output of "netstat -anpt" on Debian 4.0
+#
+# tcp 0 0 85.25.133.70:563 127.0.0.1:51452 ESTABLISHED16587/- nnrpd-ssl:
+# ^^^ ^ ^ ^^^^^^^^^^^^ ^^^ ^^^^^^^^^ ^^^^^ ^^^^^^^^^^^^^^^^ ^ ^^^^^^^^^
+# 1   2 3 4            5   6         7     8                9 10
+#
+
+#
+# Sample output of "netstat -anpt" (with IPv6 enabled) on Debian 4.0
+#
+# tcp6 0 0 ::ffff:85.25.133.70:119 ::ffff:85.25.133.:60114 ESTABLISHED3798/- nnrpd:
+# ^^^^ ^ ^   ^^^^ ^^^^^^^^^^^^ ^^^   ^^^^ ^^^^^^^^^^ ^^^^^ ^^^^^^^^^^^^^^^ ^ ^^^^^
+# 1    2 3   4    5            6     7    8          9     10              11   12
+
+#
+# Sample output of "netstat -anpt" on Ubuntu 8.04.1
+#
+# tcp 0 0 78.47.18.35:119 212.241.90.73:39562 ESTABLISHED 6876/- nnrpd: cm90-
+# ^^^ ^ ^ ^^^^^^^^^^^ ^^^ ^^^^^^^^^^^^^ ^^^^^ ^^^^^^^^^^^ ^^^^ ^ ^^^^^^ ^^^^^
+# 1   2 3 4           5   6             7     8           9    10    11 12
+#
+
+do_netstat |
+gawk -F '[[:space:]:/]+' '
+  $1 == "tcp6" && $12 ~ /^nnrpd/ { print $8; print $12 }
+  $1 == "tcp" && $10 ~ /^nnrpd/ { print $6; print $10 }
+  $1 == "tcp" && $11 ~ /^nnrpd/ { print $6; print $11 }
+' |
+sort -n |
+uniq -c |
+more

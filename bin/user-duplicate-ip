@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $Id: user-duplicate-ip 404 2010-09-22 20:00:01Z alba $
+#
+# Copyright 2009-2010 Alexander Bartolich
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+echo 'select
+	r_user.id,
+	r_user.username,
+	concat_ws(" ", r_user.first_name, r_user.last_name) AS name,
+	DATE_FORMAT(FROM_UNIXTIME(created), "%Y-%m-%d") AS created,
+	DATE_FORMAT(FROM_UNIXTIME(last_login), "%Y-%m-%d") AS last,
+	left(r_status_name.name, 1),
+	r_user.last_host,
+	IFNULL(r_host_ip_recent.name, "")
+from r_user
+left join r_status_name    on r_user.status = r_status_name.status
+left join r_user_ip        on r_user.last_host = r_user_ip.last_host
+left join r_host_ip_recent on r_user.last_host = r_host_ip_recent.ip
+where r_status_name.lang = "en"
+and r_user_ip.count_host > 1
+order by r_user.last_host, r_user.id;' |
+mysql --batch --skip-column-names --table \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}" |
+sed -e '/^+/d' -e 's/| //g'

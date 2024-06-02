@@ -1,0 +1,82 @@
+#!/bin/sh
+######################################################################
+#
+# $Id: user-expired 404 2010-09-22 20:00:01Z alba $
+#
+# Copyright 2008-2010 Alexander Bartolich
+#
+######################################################################
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+INTERVAL='6 MONTH'
+
+######################################################################
+do_select()
+######################################################################
+{
+  if [ -n "${ONLY_COUNT:-}" ]; then
+    query_column="count(A.id)"
+  else
+    query_column="
+    A.id,
+    A.username,
+    (UNIX_TIMESTAMP() - A.last_login) / 60 / 60 / 24 AS loginDays,
+    (A.last_login - A.created) / 60 / 60 / 24 AS createdDays"
+  fi
+
+  if [ -n "${SELECT_ACTIVE:-}" ]; then
+    query_active="
+    FROM_UNIXTIME(A.last_login) <= DATE_SUB(CURDATE(), INTERVAL $INTERVAL)"
+  else
+    query_active="0"
+  fi
+
+  if [ -n "${SELECT_PENDING:-}" ]; then
+    query_pending="A.last_login is null"
+  else
+    query_pending="0"
+  fi
+
+  echo "
+  SELECT ${query_column}
+  from r_user A
+  where FROM_UNIXTIME(A.created) <= DATE_SUB(CURDATE(), INTERVAL $INTERVAL)
+  and (
+    ${query_pending} OR ${query_active}
+  );" |
+  mysql --batch --skip-column-names \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}"
+}
+
+######################################################################
+# MAIN
+######################################################################
+
+for i in "$@"; do
+  if [ "${i}" = "--pending" ]; then
+    SELECT_PENDING="1"
+  elif [ "${i}" = "--active" ]; then
+    SELECT_ACTIVE="1"
+  elif [ "${i}" = "--only-count" ]; then
+    ONLY_COUNT="1"
+  fi
+done
+
+if [ -z "${SELECT_PENDING:-}" -a -z "${SELECT_ACTIVE:-}" ]; then
+  SELECT_PENDING="1"
+  SELECT_ACTIVE="1"
+fi
+
+if [ -n "${ONLY_COUNT:-}" ]; then
+  do_select
+else
+  do_select |
+  awk '{ printf "delete from r_user where id = %d; -- %s %s %s\n", $1, $2, $3, $4 }'
+fi
+
+# SELECT * from r_user A where A.created > A.last_login;
+# update r_user set created = last_login where created > last_login;

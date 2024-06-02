@@ -1,0 +1,171 @@
+@charset "ISO-8859-1";
+/*
+ * $Id: $
+ */
+/* -------------------------------------------- */
+/*
+ * http://www.sitepoint.com/forums/showthread.php?t=138405
+ */
+body, html {
+  height:100%;
+  text-align:left;
+  margin:0px;
+  padding:0px;
+  font-family:sans-serif;
+  background-color:#ccccff;
+  color:black;
+}
+#main {
+  margin-left:auto;
+  margin-right:auto;
+  text-align:left;
+}
+
+#main {
+  /*this height is for ie only*/
+  height:100%;
+  min-height:100%;
+}
+/*ie wont see this, other browsers will*/
+body>div#main{
+  height: auto;
+}
+
+/* -------------------------------------------- */
+
+a:link img, a:visited img { border-style:none; }
+a img { color:black; } /* The only way to hide the border in NS 4.x */
+
+/* -------------------------------------------- */
+
+#content, #languages {
+  position:absolute;
+  top:4px;
+}
+#languages {
+  right:4px;
+}
+#content {
+  padding:8px;
+}
+#content {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+.languages .inset {
+  padding-top:8px;
+  padding-bottom:8px;
+  padding-left:4px;
+  padding-right:4px;
+}
+
+#content {
+  z-index:1;
+  background:#F6F6F6;
+}
+.languages {
+  z-index:2;
+}
+
+/* -------------------------------------------- */
+.inset, #content {
+  border-top:1px #FFFFFF solid;
+  border-left:1px #FFFFFF solid;
+  border-right:1px #000000 solid;
+  border-bottom:1px #000000 solid;
+}
+
+.outset {
+  border-top:1px #000000 solid;
+  border-left:1px #000000 solid;
+  border-right:1px #FFFFFF solid;
+  border-bottom:1px #FFFFFF solid;
+}
+
+.languages {
+  /* margin-top:1px; */
+  border-left:1px #000000 solid;
+  border-bottom:1px #FFFFFF solid;
+
+  /* language box is opaque */ 
+  background-color:#F0E0FF;
+}
+.languages a, .languages input {
+  text-decoration:none;
+  font-weight:bold;
+  margin:4px;
+}
+.languages a:hover {
+  color: #FFFFFF;
+  text-decoration:none;
+  background-color: black;
+  min-width:100px;
+}
+
+#languages img, #languages input {
+  border:1px #000000 solid;
+}
+
+/* -------------------------------------------- */
+h1 {
+  padding:4px;
+  border-top:1px #000000 dashed;
+  border-bottom:1px #000000 dashed;
+  font-size:130%;
+}
+h2 {
+  border-top:1px #FFFFFF solid;
+  border-left:1px #FFFFFF solid;
+  border-bottom:1px #000000 solid;
+  border-right:1px #000000 solid;
+  padding:4px;
+  font-size:115%;
+}
+h3 {
+  padding:2px;
+  font-size:110%;
+  border-bottom:1px #000000 dotted;
+}
+li {
+  margin-top:4px;
+}
+caption, th {
+  text-align:left;
+  font-weight:bold;
+}
+
+/* -------------------------------------------- */
+table.odd_even {
+  border-collapse:collapse;
+  min-width:30em;
+}
+
+table.odd_even th,
+table.odd_even td {
+  padding-left:6px;
+  padding-right:6px;
+  padding-top:1px;
+  padding-bottom:2px;
+}
+
+table.odd_even th {
+  background:white;
+  text-align:center;
+  border:1px solid gray;
+}
+
+table.odd_even td {
+  border-top:1px solid gray;
+  border-bottom:1px solid gray;
+}
+
+table.odd_even tr.oe_odd { background-color:#F0E0FF; }
+
+td.oe_number { text-align:right; }
+td.oe_monospace {
+  font-family:monospace;
+  font-weight:bold;
+}
+
+/* -------------------------------------------- */

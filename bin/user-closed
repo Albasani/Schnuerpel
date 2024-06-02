@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $Id: user-closed 404 2010-09-22 20:00:01Z alba $
+#
+# Copyright 2009-2010 Alexander Bartolich
+#
+export "LANG=C"
+export "LC_ALL=C"
+set -o nounset
+set -o errexit
+
+echo 'select
+	A.id,
+	username,
+	concat_ws(" ", first_name, last_name) AS name,
+	DATE_FORMAT(FROM_UNIXTIME(created), "%Y-%m-%d") AS created,
+	DATE_FORMAT(FROM_UNIXTIME(last_login), "%Y-%m-%d") AS last,
+	left(B.name, 1),
+	A.last_host
+from r_user A, r_status_name B
+where A.status = B.status
+and B.lang = "en"
+and A.status <> 1
+order by A.id;' |
+mysql --batch --skip-column-names --table \
+	--host="${SCHNUERPEL_MYSQL_HOST:-localhost}" \
+	"${SCHNUERPEL_MYSQL_DB:-news}"

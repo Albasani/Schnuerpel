@@ -1,0 +1,13 @@
+libauthen-captcha-perl
+libcrypt-rijndael-perl
+libdigest-hmac-perl
+libdigest-sha1-perl
+libfile-temp-perl
+libi18n-acceptlanguage-perl
+libmail-sendmail-perl
+libnet-ldap-perl
+libnews-article-perl
+libnews-newsrc-perl
+libstring-crc32-perl
+libtimedate-perl
+perl-doc

@@ -1,0 +1,160 @@
+#!/usr/bin/perl -sw
+#
+# $Id: clean-newsgroups 625 2011-10-29 20:09:12Z alba $
+#
+# Copyright 2008-2009 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Write a cleaned up /var/lib/news/newsgroups to a temporary file.
+#
+######################################################################
+use strict;
+# use encoding 'latin1';
+
+use Schnuerpel::INN::ShellVars qw(
+  load_innshellvars
+  read_active
+  read_newsgroups
+);
+use File::Temp();
+
+my $PEDANTIC_GROUP = join('|',
+  '^alt\.',
+  '^free\.',
+  '^it-alt\.',
+  '^oesterreich\.',
+);
+use constant CHECK_BEGIN => 0;
+use constant CHECK_END => 0;
+use constant CHECK_CHARACTERS => 0;
+
+######################################################################
+# MAIN
+######################################################################
+
+load_innshellvars();
+$inn::newsgroups = $::file if (defined($::file));
+
+my $rh_active = read_active();
+
+my %newsgroups;
+read_newsgroups(\%newsgroups);
+
+my @group = sort keys %newsgroups;
+
+my ($tmpfile, $tmpname) = File::Temp::tempfile();
+printf STDERR "%s\n", $tmpname;
+
+for my $group(@group)
+{
+  unless(exists( $rh_active->{$group} ))
+  {
+    printf STDERR "ERROR: Group only in newsgroups file: %s\n", $group;
+    next;
+  }
+
+  my $tagline = $newsgroups{$group};
+
+  if ($tagline =~ s#=([[:xdigit:]]{2})# chr(hex($1)) #egx)
+  {
+    printf STDERR "WARNING: Tagline contained quoted printable: %s\t%s\n\n",
+      $group, $tagline;
+  }
+
+  # trim white space
+  $tagline =~ s/\s+$//;
+  $tagline =~ s/^\s+//;
+  $tagline =~ s/\s+/ /g;
+
+  # unquote 
+  $tagline =~ s/^"(.*)"$/$1/;
+
+  if (length($tagline) == 0)
+  {
+    printf STDERR "ERROR: Group has no tagline: %s\n", $group;
+    next;
+  }
+  if (uc($group) eq uc($tagline))
+  {
+    printf STDERR "ERROR: Tagline equals group: %s\n", $group;
+    next;
+  }
+
+  if ($group =~ m/$PEDANTIC_GROUP/)
+  {
+    if (CHECK_BEGIN && $tagline !~ m/^[A-Z]/)
+    {
+      printf STDERR
+	"ERROR: Tagline does not begin with uppercase latter: %s\t%s\n",
+	$group, $tagline;
+      next;
+    }
+    if (CHECK_END && $tagline !~ m/[)"'*?!.]$/)
+    {
+      printf STDERR
+	"ERROR: Unterminated tagline: %s\t%s\n",
+	$group, $tagline;
+      next;
+    }
+      #«
+      #»
+    if (CHECK_CHARACTERS && $tagline =~ m#[^][\d\s\w
+      <
+      >
+      ,
+      ;
+      :
+      !
+      ?
+      /
+      .
+      '
+      "
+      (
+      )
+      ®
+      @
+      *
+      &
+      à
+      â
+      ä
+      Ä
+      ç
+      é
+      É
+      è
+      ê
+      í
+      ì
+      î
+      ï
+      ñ
+      ó
+      ò
+      ö
+      Ö
+      ß
+      ù
+      û
+      ü
+      Ü
+      +-]#x)
+    {
+      printf STDERR "ERROR: Tagline contains invalid characters: %s\t%s\n\n",
+	$group, $tagline;
+      next;
+    }
+  }
+
+  printf $tmpfile "%-s\t\t%s\n",  $group, $tagline;
+}
+
+my $cmd = 'cat ' . $tmpname . ' > ' . $inn::newsgroups . "\n";
+print $cmd;

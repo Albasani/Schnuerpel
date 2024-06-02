@@ -1,0 +1,17 @@
+$Id: NNTP-status-code.txt 170 2008-12-27 00:29:01Z alba $
+
+According to RFC 2980
+  281 Authentication succeeded
+  502 No permission
+  503 Program error, function not performed
+
+According to RFC 3977:
+  403 Internal fault or problem preventing action being taken
+
+According to RFC 4643:
+  281 Authentication accepted
+  481 Authentication failed/rejected
+  502 Command unavailable
+
+Note that INN 2.4.x maps all codes != 281 to 502.
+INN 2.5.0 accepts 281, 481, 403

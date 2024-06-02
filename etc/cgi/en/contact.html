@@ -1,0 +1,28 @@
+<h1>Contact Form</h1>
+<p>Using this form you can send us a message, e.g. to request an account.</p>
+
+<p>See also our <a href="/info/terms_of_use.html.en"
+>Terms Of Use</a> and 
+<a href="/wiki/FAQ_%28English%29"
+>FAQ</a>.</p>
+
+<table>
+  <tr valign="top">
+    <td nowrap="nowrap" align="right"><b>Name:</b></td>
+    <td><!--#echo var="INPUT_NAME"--></td>
+  </tr><tr valign="top">
+    <td nowrap="nowrap" align="right"><b>Your email:</b></td>
+    <td><!--#echo var="INPUT_FROM"--></td>
+  </tr><tr valign="top">
+    <td nowrap="nowrap" align="right"><b>Subject:</b></td>
+    <td><!--#echo var="INPUT_SUBJECT"--></td>
+  </tr><tr valign="top">
+    <td nowrap="nowrap" align="right"><b>Comment:</b></td>
+    <td><!--#echo var="INPUT_BODY"--></td>
+  </tr><tr valign="top">
+    <td></td>
+    <td>
+      <input type="submit" name="send" value="Send Message"/>
+    </td>
+  </tr>
+</table>

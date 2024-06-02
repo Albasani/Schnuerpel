@@ -1,0 +1,49 @@
+#!/usr/bin/perl -w
+#
+# $Id: test-nntp-post 362 2010-09-10 01:08:54Z alba $
+#
+# Copyright 2008 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Reads username and password from newsreader configuration.
+# Opens NNTP connection, sets reader mode and logs in.
+#
+######################################################################
+
+use strict;
+use Carp qw( confess );
+
+# use Net::NNTP();
+use Schnuerpel::NNTP();
+
+######################################################################
+# MAIN
+######################################################################
+
+my $r_nntp = Schnuerpel::NNTP::connect();
+unless(defined($r_nntp))
+  { die 'Can\'t connect to NNTP server'; }
+my $nntp = $r_nntp->{'nntp'} || confess;
+
+{
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst)
+  = localtime($nntp->date());
+  printf "postok=%d, date=%04d-%02d-%02d %02d:%02d:%02d\n",
+    $nntp->postok(),
+    1900 + $year, 1 + $mon, $mday, $hour, $min, $sec;
+}
+
+{
+  my ($name, $passwd, $uid, $gid, $quota, $comment, $gcos, $dir,
+    $shell, $expire) = getpwuid($<);
+  $gcos =~ s#,.*##;
+  printf "%s %s\n", $name, $gcos;
+}
+
+######################################################################

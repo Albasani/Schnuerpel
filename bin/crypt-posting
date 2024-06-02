@@ -1,0 +1,121 @@
+#!/usr/bin/perl -sw
+#
+# $Id: crypt-posting 194 2009-01-07 17:45:54Z alba $
+#
+# Copyright 2007 - 2009 Alexander Bartolich
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+######################################################################
+#
+# Decode encrypted header fields of articles.
+# See bottom of file for usage message.
+#
+######################################################################
+
+use Schnuerpel::Decode qw(
+  decode_from_stream
+  print_cancel
+  print_summary
+);
+
+for my $f(
+  '/usr/lib/news/innshellvars.pl',
+  '/usr/lib/news/lib/innshellvars.pl'
+) { if (-f $f) { require $f; last; } }
+
+my $PATH_GH = $inn::pathbin . '/grephistory';
+my $PATH_SM = $inn::pathbin . '/sm';
+
+$::cancel = 0 unless(defined($::cancel));
+$::dp = 1 if ($::cancel);
+$::ds = 0 unless(defined($::ds));
+$::new = 0 unless(defined($::new));
+
+if ($::new)
+{
+  Schnuerpel::Crypt::printNewKey();
+  exit(0);
+}
+
+if ($::dp)
+{
+  for my $arg(@ARGV)
+  {
+    my $stream;
+    if ($arg eq '-')
+    {
+      $stream = *STDIN;
+    }
+    elsif ($arg =~ /^<[^<>@]+@[^<>@]+>$/)
+    {
+      my $cmd = sprintf(
+	"%s '%s' | xargs -r -n1 %s\n",
+	$PATH_GH, $arg, $PATH_SM
+      );
+      unless(open($stream, '-|', $cmd))
+	{ printf STDERR "E: Command failed: $!\n$cmd"; }
+    }
+    else
+    {
+      unless(open($stream, '<', $arg))
+	{ printf STDERR "E: Can't open file $arg\n$!"; }
+    }
+
+    printf("\n%s\n", $arg) if (!$::cancel);
+    eval
+    {
+      # Schnuerpel::Crypt::resetCipher();
+      my $posting = decode_from_stream($stream, $::time);
+      if ($::cancel)
+        { print_cancel($posting); }
+      else
+        { print_summary($posting); }
+    };
+    if ($@)
+      { printf STDERR "E: %s\n%s\n", $arg, $@; }
+    close($stream);
+  }
+  exit(0);
+}
+
+if ($::ds)
+{
+  Schnuerpel::Decode::stream(*STDIN, $::time);
+  exit(0);
+}
+
+print
+  "COMMANDS\n",
+  "  -cancel source ... like -dp but prints a cancel message\n",
+  "  -dp source     ... decode a whole posting\n",
+  "  -ds            ... decode an encrypted string read from stdin\n",
+  "  -help          ... print this help and exit\n",
+  "  -new           ... print a generated key and exit\n",
+  "\n",
+  "  When whole postings are decoded the value of NNTP-Posting-Date\n",
+  "  is used to select the apropriate key. When a plain string is\n",
+  "  decoded the latest key is used by default. In both cases you can\n",
+  "  override with option -time.\n",
+  "\n",
+  "  When whole postings are decoded a Cancel-Key based on the global\n",
+  "  secret is generated. This secret is completely unrelated to the\n",
+  "  encryption used in X-Trace.\n",
+  "\n",
+  "SOURCE SPECIFICATION\n",
+  "  A single dash ('-') means standard input.\n",
+  "\n",
+  "  A string starting with '<', containing a '\@' and ending in '>' is\n",
+  "  considered a message-id. The corresponding posting is retrieved\n",
+  "  from server via grephistory and sm.\n",
+  "\n",
+  "  Any other value is considered a file name.\n",
+  "\n",
+  "OPTIONS\n",
+  "  -time=string ... override key selection\n",
+  ;
+
+######################################################################

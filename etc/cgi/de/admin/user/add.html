@@ -1,0 +1,21 @@
+<table>
+<tr><td>Username:</td><td><!--#echo var="INPUT_USERNAME"--></td></tr>
+<tr><td>Anrede:</td><td>
+  <!--#echo var="INPUT_SEX_MALE"-->Herr
+  <!--#echo var="INPUT_SEX_FEMALE"-->Frau
+  <!--#echo var="INPUT_SEX_NA"-->Keine Angabe
+</td></tr>
+<tr><td>Vorname:</td><td><!--#echo var="INPUT_FIRST"--></td></tr>
+<tr><td>Nachname:</td><td><!--#echo var="INPUT_LAST"--></td></tr>
+<tr><td>E-Mail:</td><td><!--#echo var="INPUT_EMAIL"--></td></tr>
+<tr><td>Sprache:</td><td><!--#echo var="INPUT_LANGUAGE"--></td></tr>
+<tr><td>Passwort:</td><td><!--#echo var="INPUT_PASSWORD"--></td></tr>
+</table>
+
+<table>
+<!--#echo var="INPUT_FEATURE_FIELDS"-->
+</table>
+
+<p><input type="submit" name="Cancel" value="Abbrechen"/>
+<input type="submit" name="ConfirmAdd" value="Hinzufügen"/>
+<!--#echo var="INPUT_SEND_MAIL"--> Anschließend E-Mail senden ...</p>
